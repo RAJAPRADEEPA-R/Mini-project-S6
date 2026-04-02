@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Performance Monitoring App</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+<!-- App Styles -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<ul id="studentList"></ul>
+<!-- ─────────── AUTH SCREEN ─────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">📊</div>
+      <h1>Performance Monitoring</h1>
+    </div>
+<div id="loader" style="display:none;">Loading...</div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-sub">Sign in to your performance dashboard</p>
+      <div class="auth-error" id="login-error"></div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@university.edu">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" id="login-btn" onclick="loginUser()">Sign In →</button>
+      <p class="auth-toggle">Don't have an account? <span onclick="toggleAuth('signup')">Create one</span></p>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signup-form" style="display:none">
+      <h2 class="auth-title">Create account</h2>
+      <p class="auth-sub">Start tracking your academic performance</p>
+      <div class="auth-error" id="signup-error"></div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Arjun Kumar">
+      </div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="signup-email" placeholder="you@university.edu" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
+      </div>
+      <button class="btn btn-primary" onclick="registerUser()">Create Account →</button>
+      <p class="auth-toggle">Already have an account? <span onclick="toggleAuth('login')">Sign in</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── MAIN APP ─────────── -->
+<div id="app">
+  <div class="app-shell">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-logo">
+        <div class="logo-icon">📊</div>
+        Performance Monitoring
+      </div>
+      <span class="topbar-page-title" id="topbar-title">Dashboard</span>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-user">
+        <div class="user-avatar" id="user-initials">A</div>
+        <span class="user-name" id="user-display-name">Student</span>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-section-label">Academic</div>
+      <div class="nav-item" onclick="showPage('marks')">
+        <span class="nav-icon">🎓</span> Marks
+      </div>
+      <div class="nav-item" onclick="showPage('assignments')">
+        <span class="nav-icon">📝</span> Assignments
+      </div>
+      <div class="nav-item" onclick="showPage('attendance')">
+        <span class="nav-icon">📅</span> Attendance
+      </div>
+      <div class="nav-section-label">Activities</div>
+      <div class="nav-item" onclick="showPage('physical')">
+        <span class="nav-icon">⚡</span> Physical Activities
+      </div>
+      <div class="nav-item" onclick="showPage('competitions')">
+        <span class="nav-icon">🏆</span> Competitions
+      </div>
+      <div class="sidebar-bottom">
+        <div class="nav-item btn-danger" onclick="logoutUser()" style="margin-top:8px;">
+          <span class="nav-icon">🚪</span> Logout
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ══ DASHBOARD ══ -->
+     
+
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h2>Good <span id="greeting-time">morning</span>, <span id="greeting-name">Student</span> </h2>
+          <p>Here's your academic overview at a glance</p>
+        </div>
+        <div class="toolbar mb-20">
+          <div class="filter-row">
+            <label for="dashboard-date-filter" class="filter-label">Date Range</label>
+            <select id="dashboard-date-filter" class="filter-select" onchange="applyDashboardDateFilter(this.value)">
+              <option value="7">Last 7 Days</option>
+              <option value="30" selected>Last 30 Days</option>
+              <option value="semester">Current Semester</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-20" id="dashboard-stats">
+          <div class="stat-card blue" id="dash-stat-gpa">
+            <div class="stat-label">Overall GPA</div>
+            <div class="stat-value text-accent">8.6</div>
+            <div class="stat-sub">Current Semester</div>
+          </div>
+          <div class="stat-card green" id="dash-stat-attendance">
+            <div class="stat-label">Attendance</div>
+            <div class="stat-value" >87%</div>
+            <div class="stat-sub">This Month</div>
+          </div>
+          <div class="stat-card orange" id="dash-stat-assignments">
+            <div class="stat-label">Assignments</div>
+            <div class="stat-value" style="color:var(--accent4)">3</div>
+            <div class="stat-sub">Pending</div>
+          </div>
+          <div class="stat-card purple" id="dash-stat-competitions">
+            <div class="stat-label">Competitions</div>
+            <div class="stat-value" style="color:var(--accent2)">5</div>
+            <div class="stat-sub">Participated</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-20">
+          <div class="card" id="dash-trend-card">
+            <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Performance Trend</div>
+            <div class="chart-wrap">
+              <canvas id="dashTrendChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Subject-wise Marks</div>
+            <div class="chart-wrap">
+              <canvas id="dashRadarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent4)"></span>Recent Assignments</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Subject</th><th>Title</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td class="td-subject">Mathematics</td><td>Integration Problems</td><td><span class="badge badge-green">Submitted</span></td></tr>
+                  <tr><td class="td-subject">Physics</td><td>Wave Optics Lab</td><td><span class="badge badge-yellow">Pending</span></td></tr>
+                  <tr><td class="td-subject">Chemistry</td><td>Organic Reactions</td><td><span class="badge badge-yellow">Pending</span></td></tr>
+                  <tr><td class="td-subject">CS</td><td>Data Structures</td><td><span class="badge badge-green">Submitted</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" ></span>Upcoming Schedule</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;">
+                <div style="width:40px;height:40px;background:rgba(79,142,247,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">🧘</div>
+                <div><div class="fw-700 text-sm">Yoga Session</div><div class="text-muted" style="font-size:12px">Today · 7:00 AM</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface2);border-radius:10px;">
+                <div style="width:40px;height:40px;background:rgba(124,92,252,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">⚽</div>
+                <div><div class="fw-700 text-sm">Football Practice</div><div class="text-muted" style="font-size:12px">Tomorrow · 4:30 PM</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface2);border-radius:10px;">
+                <div style="width:40px;height:40px;background:rgba(2, 24, 20, 0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div>
+                <div><div class="fw-700 text-sm">Music Practice</div><div class="text-muted" style="font-size:12px">Wed · 5:00 PM</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ MARKS ══ -->
+      <div class="page" id="page-marks">
+        <div class="page-header">
+          <h2>Semester Grades 🎓</h2>
+          <p>Track your marks and performance across all subjects</p>
+        </div>
+
+        <div class="semester-tabs" id="sem-tabs">
+          <div class="sem-tab active" onclick="selectSem(this,1)">Semester 1</div>
+          <div class="sem-tab" onclick="selectSem(this,2)">Semester 2</div>
+          <div class="sem-tab" onclick="selectSem(this,3)">Semester 3</div>
+          <div class="sem-tab" onclick="selectSem(this,4)">Semester 4</div>
+          <div class="sem-tab" onclick="selectSem(this,5)">Semester 5</div>
+        </div>
+
+        <div class="grid-2 mb-28">
+          <div class="card">
+            <div class="card-title"><span class="dot" "></span>Grade Distribution</div>
+            <div class="chart-wrap">
+              <canvas id="marksBarChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>GPA Over Semesters</div>
+            <div class="chart-wrap">
+              <canvas id="gpaLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Subject-wise Marks — <span id="sem-title">Semester 1</span></div>
+          <div class="toolbar">
+            <input id="marks-search" class="filter-input" type="text" placeholder="Search by subject name..." oninput="updateMarksFilters()">
+            <select id="marks-grade-filter" class="filter-select" onchange="updateMarksFilters()">
+              <option value="">All Grades</option>
+              <option value="A+">A+</option>
+              <option value="A">A</option>
+              <option value="B+">B+</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+            <select id="marks-result-filter" class="filter-select" onchange="updateMarksFilters()">
+              <option value="">All Results</option>
+              <option value="Pass">Pass</option>
+              <option value="Fail">Fail</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="marks-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Internal</th>
+                  <th>External</th>
+                  <th>Total</th>
+                  <th>Grade</th>
+                  <th>Result</th>
+                  <th>Progress</th>
+                </tr>
+              </thead>
+              <tbody id="marks-tbody"></tbody>
+            </table>
+            <div class="empty-state" id="marks-empty" style="display:none;">No subjects match your filters.</div>
+          </div>
+          <div class="pagination-wrap">
+            <button class="btn btn-secondary" id="marks-prev" onclick="changeMarksPage(-1)">Prev</button>
+            <span id="marks-page-info">Page 1 of 1</span>
+            <button class="btn btn-secondary" id="marks-next" onclick="changeMarksPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ASSIGNMENTS ══ -->
+      <div class="page" id="page-assignments">
+        <div class="page-header">
+          <h2>Assignments 📝</h2>
+          <p>Track submission status across all subjects</p>
+        </div>
+
+        <div class="grid-4 mb-20">
+          <div class="stat-card green">
+            <div class="stat-label">Submitted</div>
+            <div class="stat-value text-success">8</div>
+          </div>
+          <div class="stat-card brown">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" style="color:var(--warning)">3</div>
+          </div>
+          <div class="stat-card pink">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-value text-danger">1</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Total</div>
+            <div class="stat-value text-accent">12</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-20">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Status Overview</div>
+            <div class="chart-wrap" style="height:180px">
+              <canvas id="assignPieChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Submissions by Subject</div>
+            <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px" id="assign-subject-bars"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--accent4)"></span>All Assignments</div>
+          <div class="toolbar">
+            <input id="assign-search" class="filter-input" type="text" placeholder="Search by subject or assignment title..." oninput="updateAssignmentFilters()">
+            <select id="assign-status-filter" class="filter-select" onchange="updateAssignmentFilters()">
+              <option value="">All Status</option>
+              <option value="submitted">Submitted</option>
+              <option value="pending">Pending</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <select id="assign-subject-filter" class="filter-select" onchange="updateAssignmentFilters()">
+              <option value="">All Subjects</option>
+            </select>
+            <select id="assign-due-filter" class="filter-select" onchange="updateAssignmentFilters()">
+              <option value="">Due Date: Default</option>
+              <option value="upcoming">Upcoming deadlines</option>
+              <option value="asc">Due Date: Earliest first</option>
+              <option value="desc">Due Date: Latest first</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Subject</th><th>Assignment</th><th>Due Date</th><th>Submitted On</th><th>Score</th><th>Status</th></tr>
+              </thead>
+              <tbody id="assign-tbody"></tbody>
+            </table>
+            <div class="empty-state" id="assign-empty" style="display:none;">No assignments found for the selected filters.</div>
+          </div>
+          <div class="pagination-wrap">
+            <button class="btn btn-secondary" id="assign-prev" onclick="changeAssignmentPage(-1)">Prev</button>
+            <span id="assign-page-info">Page 1 of 1</span>
+            <button class="btn btn-secondary" id="assign-next" onclick="changeAssignmentPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ATTENDANCE ══ -->
+      <div class="page" id="page-attendance">
+        <div class="page-header">
+          <h2>Attendance 📅</h2>
+          <p>Hourly & day-wise attendance with calendar view</p>
+        </div>
+
+        <div class="grid-4 mb-20">
+          <div class="stat-card green">
+            <div class="stat-label">Present Days</div>
+            <div class="stat-value text-success" id="att-present">18</div>
+          </div>
+          <div class="stat-card pink">
+            <div class="stat-label">Absent Days</div>
+            <div class="stat-value text-danger" id="att-absent">4</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Attendance %</div>
+            <div class="stat-value text-accent" id="att-pct">82%</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Hours Attended</div>
+            <div class="stat-value" style="color:var(--accent4)">126</div>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="card mb-20">
+          <div class="month-nav">
+            <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+            <div class="month-label" id="cal-month-label">March 2026</div>
+            <button class="month-btn" onclick="changeMonth(1)">›</button>
+          </div>
+          <div class="calendar-grid" id="cal-grid"></div>
+        </div>
+
+        <!-- Hourly Attendance -->
+        <div class="card mb-20">
+          <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Today's Hourly Attendance</div>
+          <div class="hour-grid" id="hour-grid"></div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Weekly Attendance</div>
+            <div class="chart-wrap">
+              <canvas id="attWeekChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Monthly Trend</div>
+            <div class="chart-wrap">
+              <canvas id="attMonthChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PHYSICAL ACTIVITIES ══ -->
+      <div class="page" id="page-physical">
+        <div class="page-header">
+          <h2>Physical Activities ⚡</h2>
+          <p>Sports, yoga, music & dance — schedules & performance</p>
+        </div>
+
+        <div class="grid-2 mb-20" id="activity-grid"></div>
+
+        <div class="card mb-20">
+          <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Performance Over Time</div>
+          <div class="chart-wrap">
+            <canvas id="physLineChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--accent3)"></span>Activity Log</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Activity</th><th>Date</th><th>Duration</th><th>Rating</th><th>Notes</th></tr></thead>
+              <tbody id="phys-log-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination-wrap">
+            <button class="btn btn-secondary" id="phys-prev" onclick="changePhysicalLogPage(-1)">Prev</button>
+            <span id="phys-page-info">Page 1 of 1</span>
+            <button class="btn btn-secondary" id="phys-next" onclick="changePhysicalLogPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ COMPETITIONS ══ -->
+      <div class="page" id="page-competitions">
+        <div class="page-header">
+          <h2>Competitions 🏆</h2>
+          <p>Competitions participated & target tracking</p>
+        </div>
+
+        <div class="grid-4 mb-20">
+          <div class="stat-card purple">
+            <div class="stat-label">Participated</div>
+            <div class="stat-value" style="color:var(--accent2)">5</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Targets Met</div>
+            <div class="stat-value text-success">3</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Targets Missed</div>
+            <div class="stat-value" style="color:var(--warning)">2</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Win Rate</div>
+            <div class="stat-value text-accent">60%</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-20">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Competitions Overview</div>
+            <div class="chart-wrap" style="height:200px">
+              <canvas id="compPieChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent4)"></span>Category Breakdown</div>
+            <div class="toolbar">
+              <select id="comp-target-filter" class="filter-select" onchange="updateCompetitionFilter()">
+                <option value="">All Targets</option>
+                <option value="achieved">Achieved</option>
+                <option value="missed">Missed</option>
+              </select>
+            </div>
+            <div class="chart-wrap" style="height:200px">
+              <canvas id="compBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div id="comp-list" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Attendance Day Popup -->
+<div class="att-popup" id="att-popup">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span class="fw-700" id="popup-date">March 7, 2026</span>
+    <span onclick="closePopup()" style="cursor:pointer;color:var(--text3);font-size:18px">✕</span>
+  </div>
+  <div id="popup-status" style="font-size:24px;font-weight:800;margin-bottom:8px"></div>
+  <div id="popup-detail" style="font-size:13px;color:var(--text2)"></div>
+  <div class="divider"></div>
+  <div style="font-size:12px;color:var(--text3)">Hours attended: <span id="popup-hours" class="fw-700 text-accent">6/7</span></div>
+</div>
+
+<!-- ─── JavaScript Modules (order matters) ─── -->
+<!-- <script src="js/firebase-config.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/marks.js"></script>
+<script src="js/assignments.js"></script>
+<script src="js/attendance.js"></script>
+<script src="js/physical.js"></script>
+<script src="js/competitions.js"></script>
+<script src="js/auth.js"></script>
+
+-->
+
+
+<script src="{{ url_for('static', filename='js/firebase-config.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nav.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/marks.js') }}"></script>
+<script src="{{ url_for('static', filename='js/assignments.js') }}"></script>
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+<script src="{{ url_for('static', filename='js/physical.js') }}"></script>
+<script src="{{ url_for('static', filename='js/competitions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<div id="toast-container" class="toast-container"></div>
+</body>
+</html>

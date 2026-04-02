@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "performance-monitoring-2a162",
+  "private_key_id": "7ee811ddf2db78898c188c8f403abc12a9cf0c28",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDFlM6EI3b7+fFb\nSiASOzgxEnFon41kJJ1x2rBoPS4V30Yd6gvX4F7by3QifOeDTOVuqezR7/Y/OSyV\nz+NFIW1ppRENEEH1eIzs7OEYQXlSOpx/F0UZCqLqqACIW3qjuG+9VdWr9YyXKe7c\nx324FNzmB26KJ4vnb+8RXOzBEj1WS0TXu2+3GX95QBKa0kDzn9+woj4bUn8l7JBv\nM/efPUHE0SGMHccPWcNzba/eSm77+CqFrGTTMaJhebIWiq3+GCtfr+AydbtGnvMp\njGpLTgIlbnR1MuceeOMC0K9CM6O+8pM9MJG5A/YF0YtxAjFr9MgiSrSKCT9DYQ5I\nOzZL2/DPAgMBAAECggEAF0lOfaxgXZo7o/K8jOmF2eK+kwIa++6Ez+JiYCa1w8Yo\n0WXAN5UuGOGFsnreHk91yvEkBCov74uhgZaaxo8GAil+NPfxjijDEzln3h/5WIOn\n5iKr9iOWx+k9BtUhQyJ9qObw4+9wvnAmwsaQPp3W2xWNJaM7je9XUciN7sNjj0Pi\nn994pLlt61cS2yEGd1uMUADaqU7gBLjhPkLKDNzSrXey1Ma/GHuqxCdHcxAin4ye\nkMgzYI2AmJbD/lCIaGL9XiO6bzyzvBqSx4scs6XiwZSrZ2mmLRRXarUU09XqwKNu\ntr29G6tU+bvqbwcwsmkDWEQYbC6U9IKADX6twkW24QKBgQDvPkjhCp81BNeHxofd\ndpcc3Vcuemvog+je9w/W93HJaGnAx55kZDbxWQgyjP1cUWHOGBI92eulFtu2C/iZ\ns3Q+oSlCJstgULCpTuLrbLl3e12/3J+fY0aTbPSBOovnhV/Dn87Yo2yCOZNc1Jrv\nJKyQvcfqsmPs4t0K6umD5E508wKBgQDTa4HrNCog7wGXnaySrAf5/a2bjgY6xceS\nebseacmhHiXga57xNftWrs+xvTrauw01q44VLxG3nvSJMlNIGPHz3aT1Lku7UKrY\nbvMQ39H56VJt7nK/OOz1VYuXIWqIb7lHY7J3JgQkN9z/+t/pANQn+L84InNNxFye\nvb4Iz6P7tQKBgBq8fzCHG1u1etC1oyFgy2pyYffTvpNximjAe4iuhozXmlns9QqL\nGIjIRl4/22Chx6hckE1ROUBt2YfytomWwHrvT8kQxNGysst5AWsF74QmyUdTxJLv\naUe4eWqnvFLXWOhnx5n2SX4UKR/KsrXfB1n1m43i+b/Taph5wDb5ILt5AoGBAJBy\nG0l/Umk94nCcIZP0RV7fmwV0e30cM8Y3tUiKLmAOIQK7hNR4dUg8F1rwVo2qztOk\nama+yfQSfjBeWdggcu6SuGlrQAKykoddBmS5BtUgPFkvWOadFghocf7HremZq5TC\n4OPW7W1xXWTnGqQvFMRahwrrPqwbRMyQBo4uj3MhAoGBALsY6lWq+6psAAkNv1EH\npwt+obJYYhP07rSfwZFS9t12ffOY5Z+exKSoR47yS2dfOa8RFSLDM+5+2tWtUJm7\nK0PJDpf2Cqc30Tj9Wz0aTMD9zTw+gMbgK3nHndhNHa8DQ3D85Gr0dN+U4tnjILdo\n4gYU2LzqfOcy56k9XU05xrvs\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@performance-monitoring-2a162.iam.gserviceaccount.com",
+  "client_id": "118128193298849456389",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40performance-monitoring-2a162.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
